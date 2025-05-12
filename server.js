@@ -32,17 +32,37 @@ function parseSensorsOutput(output) {
   const sensors = {};
   const lines = output.split("\n");
 
+  // Track specific sensor contexts
+  let currentAdapter = null;
+
   lines.forEach((line) => {
-    // Temperature parsing
-    const tempMatch = line.match(/(\w+):\s*\+?(\d+\.\d+)°C\s*/);
+    // Adapter detection
+    const adapterMatch = line.match(
+      /^(\w+(?:\s+\w+)*)\s*:\s*(?:Adapter|ISA adapter|Virtual device)/
+    );
+    if (adapterMatch) {
+      currentAdapter = adapterMatch[1];
+    }
+
+    // Temperature parsing with adapter context
+    const tempMatch = line.match(/(\w+\d*):\s*\+?(\d+\.\d+)\s*°?C\s*/);
     if (tempMatch) {
-      sensors[tempMatch[1]] = parseFloat(tempMatch[2]);
+      const sensorName = currentAdapter
+        ? `${currentAdapter} - ${tempMatch[1]}`
+        : tempMatch[1];
+      sensors[sensorName] = parseFloat(tempMatch[2]);
     }
 
     // Voltage parsing
     const voltMatch = line.match(/(\w+\d*)\s*:\s*(\d+\.\d+)\s*V/);
     if (voltMatch) {
       sensors[voltMatch[1]] = parseFloat(voltMatch[2]);
+    }
+
+    // Voltage parsing for millivolts
+    const mVoltMatch = line.match(/(\w+\d*)\s*:\s*(\d+\.\d+)\s*mV/);
+    if (mVoltMatch) {
+      sensors[mVoltMatch[1]] = parseFloat(mVoltMatch[2]) / 1000;
     }
 
     // Fan speed parsing
