@@ -1,14 +1,31 @@
 const express = require("express");
 const { exec } = require("child_process");
 const path = require("path");
+const os = require("os");
 
 const app = express();
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3000;
 
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// API endpoint to get sensor readings
+// API endpoint to get system metrics
+app.get("/api/system-metrics", (req, res) => {
+  Promise.all([getDiskSpace(), getRAMUsage(), getCPULoad()])
+    .then(([diskSpace, ramUsage, cpuLoad]) => {
+      res.json({
+        ...diskSpace,
+        ...ramUsage,
+        ...cpuLoad,
+      });
+    })
+    .catch((error) => {
+      console.error("Error fetching system metrics:", error);
+      res.status(500).json({ error: "Failed to retrieve system metrics" });
+    });
+});
+
+// Existing sensors endpoint
 app.get("/api/sensors", (req, res) => {
   exec("sensors", (error, stdout, stderr) => {
     if (error) {
@@ -27,7 +44,74 @@ app.get("/api/sensors", (req, res) => {
   });
 });
 
-// Function to parse sensors output
+// Function to get disk space
+function getDiskSpace() {
+  return new Promise((resolve, reject) => {
+    exec("df -h /", (error, stdout, stderr) => {
+      if (error) {
+        return reject(error);
+      }
+
+      const lines = stdout.trim().split("\n");
+      const diskInfo = lines[1].split(/\s+/);
+
+      resolve({
+        "Disk Total": diskInfo[1],
+        "Disk Used": diskInfo[2],
+        "Disk Used %": diskInfo[4],
+      });
+    });
+  });
+}
+
+// Function to get RAM usage
+function getRAMUsage() {
+  return new Promise((resolve) => {
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const usedMemory = totalMemory - freeMemory;
+
+    resolve({
+      "RAM Total": `${(totalMemory / (1024 * 1024 * 1024)).toFixed(2)} GB`,
+      "RAM Used": `${(usedMemory / (1024 * 1024 * 1024)).toFixed(2)} GB`,
+      "RAM Used %": `${((usedMemory / totalMemory) * 100).toFixed(2)}%`,
+    });
+  });
+}
+
+// Function to get CPU load
+function getCPULoad() {
+  return new Promise((resolve, reject) => {
+    exec('top -bn1 | grep "Cpu(s)"', (error, stdout, stderr) => {
+      if (error) {
+        return reject(error);
+      }
+
+      // Parsing CPU usage from top output
+      const cpuMatch = stdout.match(
+        /(\d+\.\d+)\s*%\s*us,\s*(\d+\.\d+)\s*%\s*sy/
+      );
+
+      if (cpuMatch) {
+        const userLoad = parseFloat(cpuMatch[1]);
+        const systemLoad = parseFloat(cpuMatch[2]);
+        const totalLoad = userLoad + systemLoad;
+
+        resolve({
+          "CPU User Load": `${userLoad.toFixed(2)}%`,
+          "CPU System Load": `${systemLoad.toFixed(2)}%`,
+          "CPU Total Load": `${totalLoad.toFixed(2)}%`,
+        });
+      } else {
+        resolve({
+          "CPU Load": "Unable to retrieve",
+        });
+      }
+    });
+  });
+}
+
+// Existing sensors output parsing function
 function parseSensorsOutput(output) {
   const sensors = {};
   const lines = output.split("\n");

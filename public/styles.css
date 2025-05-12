@@ -13,6 +13,93 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 20px;
     width: 100%;
+    max-width: 1000px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.sensor-section {
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.sensor-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.sensor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.sensor-card {
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sensor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sensor-name {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+.sensor-value {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.warning {
+    color: #dc3545;
+}
+
+.normal {
+    color: #28a745;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .sensor-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.dashboard {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 100%;
     max-width: 800px;
 }
 
